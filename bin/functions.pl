@@ -214,7 +214,7 @@ if (defined $JAVA_HOME and $JAVA_HOME ne "") {
 	$ENV{'PATH'}      = File::Spec->catfile($JAVA_HOME, 'bin') . $PATHSEP . $ENV{'PATH'};
 
         my ($shortversion) = get_version_from_java(File::Spec->catfile($JAVA_HOME, 'bin', 'java'));
-        if ($shortversion >= 9) {
+        if ($shortversion >= 9 && $shortversion < 11) {
                 $JDK9_OR_GT = 1;
         };
 }
@@ -356,7 +356,7 @@ sub get_minimum_java {
 
 # for now
 sub get_maximum_java {
-	return 9;
+	return 17;
 }
 
 sub get_version_from_java {
