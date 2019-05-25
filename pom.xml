@@ -1689,6 +1689,21 @@
                 <artifactId>sevntu-checkstyle-maven-plugin</artifactId>
                 <version>1.25.0</version>
               </dependency>
+              <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4jVersion}</version>
+              </dependency>
+              <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-jdk14</artifactId>
+		<version>${slf4jVersion}</version>
+              </dependency>
+              <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+		<version>${slf4jVersion}</version>
+              </dependency>
             </dependencies>
             <configuration>
               <configLocation>nms_checks.xml</configLocation>
