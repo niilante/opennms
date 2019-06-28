@@ -1326,6 +1326,8 @@
     <hawtio.version>2.0.0</hawtio.version>
 
     <!-- dependency versions -->
+    <jaxbApiVersion>99.99.99-use-opennms-jaxb</jaxbApiVersion>
+    <jaxbApiVersion>99.99.99-use-opennms-jaxb</jaxbApiVersion>
     <oldAsmVersion>99.99.99-exclude-and-use-org.ow2.asm.asm-all-instead</oldAsmVersion>
     <args4jVersion>2.32</args4jVersion>
     <asmVersion>5.0.4</asmVersion>
@@ -3872,12 +3874,12 @@
       <dependency>
         <groupId>javax.xml.bind</groupId>
         <artifactId>jaxb-api</artifactId>
-        <version>99.99.99-use-opennms-jaxb</version>
+        <version>${jaxbApiVersion}</version>
       </dependency>
       <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-impl</artifactId>
-        <version>99.99.99-use-opennms-jaxb</version>
+        <version>${jaxbImplVersion}</version>
       </dependency>
       <dependency>
         <groupId>jdom</groupId>
