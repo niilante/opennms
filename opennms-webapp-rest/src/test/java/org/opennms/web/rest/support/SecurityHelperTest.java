@@ -40,7 +40,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -93,7 +93,7 @@ public class SecurityHelperTest {
         SecurityContext securityContext = mock(SecurityContext.class, RETURNS_DEEP_STUBS);
         when(securityContext.getUserPrincipal().getName()).thenReturn(USER);
         when(securityContext.isUserInRole(anyString())).thenAnswer((Answer) invocation -> {
-            final String role = invocation.getArgumentAt(0, String.class);
+            final String role = invocation.getArgument(0, String.class);
             return userRoles.contains(role);
         });
 

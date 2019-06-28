@@ -87,7 +87,12 @@ public class TsrmMockTest {
         incidentResponse.setINCIDENTMboKeySet(incidentMboKeyType);
         incidentMboKeyType.getINCIDENT().add(incidentKey);
 
-        when(port.createSHSIMPINC(argThat(new CreateIncidentArg()))).thenReturn(incidentResponse);
+        when(port.createSHSIMPINC(argThat(new ArgumentMatcher<CreateSHSIMPINCType>() {
+            @Override
+            public boolean matches(CreateSHSIMPINCType createSHSIMPINCType) {
+                return true;
+            }
+        }))).thenReturn(incidentResponse);
         port.createSHSIMPINC(createIncidentType);
 
         Ticket ticket = new Ticket();
@@ -111,7 +116,12 @@ public class TsrmMockTest {
         queryType.getINCIDENT().add(queryIncidentType);
         queryResponse.setSHSIMPINCSet(queryType);
 
-        when(port.querySHSIMPINC(argThat(new QueryIncidentArg()))).thenReturn(queryResponse);
+        when(port.querySHSIMPINC(argThat(new ArgumentMatcher<QuerySHSIMPINCType>() {
+            @Override
+            public boolean matches(QuerySHSIMPINCType querySHSIMPINCType) {
+                return true;
+            }
+        }))).thenReturn(queryResponse);
         port.querySHSIMPINC(queryIncident);
 
         Ticket ticket = m_ticketer.get(INCIDENT_ID);
@@ -120,23 +130,4 @@ public class TsrmMockTest {
 
         assertEquals(ticket.getId(), INCIDENT_ID);
     }
-
-    static class CreateIncidentArg
-            extends ArgumentMatcher<CreateSHSIMPINCType> {
-
-        @Override
-        public boolean matches(Object argument) {
-            return true;
-        }
-    }
-
-    static class QueryIncidentArg
-            extends ArgumentMatcher<QuerySHSIMPINCType> {
-
-        @Override
-        public boolean matches(Object argument) {
-            return true;
-        }
-    }
-
 }

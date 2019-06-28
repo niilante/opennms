@@ -74,7 +74,7 @@ public class IfTttTriggerTest {
         when(closeableHttpClient.execute(Matchers.anyObject())).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                HttpPost httpPost = invocationOnMock.getArgumentAt(0, HttpPost.class);
+                HttpPost httpPost = invocationOnMock.getArgument(0, HttpPost.class);
                 Assert.assertEquals("POST https://maker.ifttt.com/trigger/" + TEST_EVENT + "/with/key/" + TEST_KEY + " HTTP/1.1", httpPost.getRequestLine().toString());
                 Assert.assertEquals("{\"value1\":\"abc1\",\"value2\":\"abc2\",\"value3\":\"abc3\"}", IOUtils.toString(httpPost.getEntity().getContent()));
                 return closeableHttpResponse;
