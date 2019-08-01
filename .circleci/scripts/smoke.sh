@@ -5,6 +5,8 @@ MINIMAL=0
 if [ "$1" = "true" ]; then
   MINIMAL=1
 fi
+PATH=~/project/maven/bin:$PATH
+export PATH
 
 find_tests()
 {

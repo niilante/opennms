@@ -1,5 +1,8 @@
 #!/bin/sh -e
 
+PATH=~/project/maven/bin:$PATH
+export PATH
+
 find_tests()
 {
     # Generate surefire & failsafe test list based on current
