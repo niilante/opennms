@@ -6,8 +6,12 @@ authenticator: AllowAllAuthenticator
 authorizer: AllowAllAuthorizer
 permissions_validity_in_ms: 2000
 partitioner: org.apache.cassandra.dht.Murmur3Partitioner
+cdc_enabled: false
+cdc_raw_directory: target/embeddedCassandra/data/cdc_raw
 data_file_directories:
     - target/embeddedCassandra/data
+hints_directory:
+    - target/embeddedCassandra/hints
 commitlog_directory: target/embeddedCassandra/commitlog
 disk_failure_policy: stop
 key_cache_size_in_mb:
