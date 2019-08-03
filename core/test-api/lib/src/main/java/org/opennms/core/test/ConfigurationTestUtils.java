@@ -151,6 +151,10 @@ public abstract class ConfigurationTestUtils extends Assert {
     public static InputStream getInputStreamForResource(Object obj, String resource) {
         assertFalse("obj should not be an instance of java.lang.Class; you usually want to use 'this'", obj instanceof Class<?>);
         InputStream is = getClass(obj).getResourceAsStream(resource);
+        if (is == null) {
+            LOG.debug("could not get resource '{}' from classloader of {}, trying as system resource.", resource, getClass(obj));
+            is = ClassLoader.getSystemResourceAsStream(resource.substring(1));
+        }
         assertNotNull("could not get resource '" + resource + "' as an input stream", is);
         return is;
     }
