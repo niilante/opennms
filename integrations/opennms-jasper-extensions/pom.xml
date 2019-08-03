@@ -53,7 +53,7 @@
           <keyalg>DSA</keyalg>
           <dname>CN=localhost, OU=Measurement API Wire Mock, O=The OpenNMS Group, C=US</dname>
           <keystore>${project.build.directory}/test-keystore.jks</keystore>
-          <storepass>password</storepass>
+          <storepass>changeit</storepass>
           <validity>2</validity>
         </configuration>
       </plugin>
