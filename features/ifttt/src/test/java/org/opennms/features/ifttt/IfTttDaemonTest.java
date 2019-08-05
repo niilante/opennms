@@ -62,6 +62,7 @@ import org.opennms.netmgt.model.OnmsCategory;
 import org.opennms.netmgt.model.OnmsEvent;
 import org.opennms.netmgt.model.OnmsNode;
 import org.opennms.netmgt.model.OnmsSeverity;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +70,7 @@ import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionOperations;
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"javax.xml.*","org.xml.*"})
 public class IfTttDaemonTest {
     private static final Logger LOG = LoggerFactory.getLogger(IfTttDaemonTest.class);
 
