@@ -32,6 +32,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Resource;
 
@@ -54,6 +56,11 @@ public class ThreadReportPluginIT extends ReportPluginITCase {
         final Map<String, org.springframework.core.io.Resource> entries = m_threadReportPlugin.getEntries();
         final org.springframework.core.io.Resource resource = entries.get("ThreadDump.txt");
         final String contents = IOUtils.toString(resource.getInputStream());
-        assertTrue(contents.contains("at sun.management.ThreadImpl.dumpAllThreads"));
+
+        // For JDK 8: at <class>.<method>
+        // For JDK 11+: at <module>@<version>/<class>.<method>
+        Pattern p = Pattern.compile("at java\\.management@[\\d+\\.]+/sun\\.management\\.ThreadImpl\\.dumpAllThreads");
+        Matcher m = p.matcher(contents);
+        assertTrue(m.find());
     }
 }
