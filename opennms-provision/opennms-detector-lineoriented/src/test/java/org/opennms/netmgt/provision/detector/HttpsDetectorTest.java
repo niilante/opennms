@@ -42,6 +42,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.opennms.core.test.MockLogAppender;
 import org.opennms.core.utils.InetAddressUtils;
@@ -69,6 +70,9 @@ public class HttpsDetectorTest {
     @Rule
     public WireMockRule m_wireMockRule = new WireMockRule(wireMockConfig().httpsPort(SSL_PORT));
 
+    @Rule
+    public TestName m_testName = new TestName();
+
     private ResponseDefinitionBuilder getOKResponse() {
         return aResponse()
                 .withHeader("Server", "Apache/2.0.54")
@@ -90,6 +94,7 @@ public class HttpsDetectorTest {
 
     @Before
     public void setUp() throws Exception {
+        System.out.println("------------------- begin " + m_testName.getMethodName() + " ---------------------");
         MockLogAppender.setupLogging();
         m_detector = m_detectorFactory.createDetector(new HashMap<>());
 
@@ -100,6 +105,20 @@ public class HttpsDetectorTest {
         m_detector.setCheckRetCode(false);
         m_detector.setMaxRetCode(500);
         m_detector.setRetries(0);
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        if(m_server != null) {
+            m_server.stopServer();
+            m_server = null;
+            try {
+                Thread.sleep(100);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        System.out.println("------------------- end " + m_testName.getMethodName() + " -----------------------");
     }
 
     @Test(timeout=20000)
