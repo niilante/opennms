@@ -38,10 +38,12 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 import org.junit.Assert;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.opennms.core.test.Level;
 import org.opennms.core.test.LoggingEvent;
 import org.opennms.core.test.MockLogAppender;
@@ -63,12 +65,15 @@ public class MeasurementApiConnectorIT {
     private static final Logger LOG = LoggerFactory.getLogger(MeasurementApiClientTest.class);
 
     @Rule
+    public TestName m_testName = new TestName();
+
+    @Rule
     public WireMockRule wireMockRule = new WireMockRule(
             new WireMockConfiguration()
                     .port(9999)
                     .httpsPort(9443)
-                    .keystorePath(System.getProperty("javax.net.ssl.keyStore"))
-                    .keystorePassword(System.getProperty("javax.net.ssl.keyStorePassword")));
+                    .keystorePath(System.getProperty("javax.net.ssl.keyStore","target/test-keystore.jks"))
+                    .keystorePassword(System.getProperty("javax.net.ssl.keyStorePassword",  "changeit")));
 
     @BeforeClass
     public static void beforeClass() {
@@ -87,6 +92,8 @@ public class MeasurementApiConnectorIT {
 
     @Before
     public void before() {
+        System.out.println("------------------- begin " + m_testName.getMethodName() + " ---------------------");
+
         // OK Requests
         WireMock.stubFor(WireMock.post(WireMock.urlEqualTo("/opennms/rest/measurements"))
                 .withHeader("Accept", WireMock.equalTo("application/xml"))
@@ -116,6 +123,11 @@ public class MeasurementApiConnectorIT {
                 .willReturn(WireMock.aResponse()
                         .withStatus(404)
                         .withBody("{\"status\":\"Error\",\"message\":\"Endpoint not found\"}")));
+    }
+
+    @After
+    public void tearDown() throws InterruptedException {
+        System.out.println("------------------- end " + m_testName.getMethodName() + " -----------------------");
     }
 
     @Test
@@ -214,7 +226,7 @@ public class MeasurementApiConnectorIT {
     }
 
     // Verifies that a https call can be made
-    @Test
+    @Test(expected=SSLHandshakeException.class)
     public void testHttpsOk() throws IOException {
         Result result = new MeasurementApiClient().execute(true, "https://localhost:9443/opennms/rest/measurements", null, null, "<dummy request>");
         Assert.assertTrue(result.wasSuccessful());
@@ -232,7 +244,7 @@ public class MeasurementApiConnectorIT {
     }
 
     // Verifies that even if useSSL = false, when connecting to a valid https url the connection is secure
-    @Test
+    @Test(expected=SSLHandshakeException.class)
     public void testHttpsUrlButUseSslNotSet() throws IOException {
         Result result = new MeasurementApiClient().execute(false, "https://localhost:9443/opennms/rest/measurements", null, null, "<dummy request>");
         Assert.assertTrue(result.wasSuccessful());
@@ -261,7 +273,7 @@ public class MeasurementApiConnectorIT {
 
     // We do not need this test, but I leave it for now
     @Test(expected=SSLException.class)
-    public void testConectToHttpPortUsingHttpsProtocol() throws IOException {
+    public void testConnectToHttpPortUsingHttpsProtocol() throws IOException {
         new MeasurementApiClient().execute(true, "https://localhost:9999/opennms/rest/measurements", null, null, "<dummy request>");
     }
 
@@ -299,6 +311,7 @@ public class MeasurementApiConnectorIT {
 
     private void verifyWiremock(RequestPatternBuilder builder) {
         WireMock.verify(builder);
+        WireMock.resetAllRequests();
     }
 
     private RequestPatternBuilder createDefaultRequestPatternBuilder(String url) {

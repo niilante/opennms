@@ -96,6 +96,7 @@ public class RemoteMeasurementDataSourceWrapperIT {
         JRRewindableDataSource dataSource = new RemoteMeasurementDataSourceWrapper(false, "http://localhost:9999/opennms/rest/doesNotExist", null, null).createDataSource("<query-request />");
         Assert.assertNotNull(dataSource);
         Assert.assertEquals(EmptyJRDataSource.class, dataSource.getClass());
+        WireMock.resetAllRequests();
     }
 
     @Test
