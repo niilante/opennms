@@ -143,7 +143,7 @@ public class JCifsMonitor extends ParameterSubstitutingMonitor {
         // ... and path
         String fullUrl = "smb://" + smbHost + path;
 
-        logger.debug("Domain: [{}], Username: [{}], Password: [{}], Mode: [{}], Path: [{}], Authentication: [{}], Full Url: [{}]", new Object[]{domain, username, password, mode, path, authString, fullUrl});
+        logger.debug("Domain: [{}], Username: [{}], Password: [{}], Mode: [{}], Path: [{}], Authentication: [{}], Full Url: [{}]", domain, username, password, mode, path, authString, fullUrl);
 
         // Initializing TimeoutTracker with default values
         TimeoutTracker tracker = new TimeoutTracker(parameters, DEFAULT_RETRY, DEFAULT_TIMEOUT);
@@ -159,7 +159,7 @@ public class JCifsMonitor extends ParameterSubstitutingMonitor {
 
             try {
                 // Creating SmbFile object
-                SmbFile smbFile = new SmbFile(fullUrl, ntlmPasswordAuthentication);
+                SmbFile smbFile = makeSmbFile(fullUrl, ntlmPasswordAuthentication);
                 // Setting the defined timeout
                 smbFile.setConnectTimeout(tracker.getConnectionTimeout());
                 // Does the file exists?
@@ -170,14 +170,14 @@ public class JCifsMonitor extends ParameterSubstitutingMonitor {
                         if (smbFileExists) {
                             serviceStatus = PollStatus.up();
                         } else {
-                            serviceStatus = PollStatus.down("File " + fullUrl + " should exists but doesn't!");
+                            serviceStatus = PollStatus.down("File " + fullUrl + " should exist but doesn't!");
                         }
                         break;
                     case PATH_NOT_EXIST:
                         if (!smbFileExists) {
                             serviceStatus = PollStatus.up();
                         } else {
-                            serviceStatus = PollStatus.down("File " + fullUrl + " should not exists but does!");
+                            serviceStatus = PollStatus.down("File " + fullUrl + " should not exist but does!");
                         }
                         break;
                     case FOLDER_EMPTY:
@@ -188,7 +188,7 @@ public class JCifsMonitor extends ParameterSubstitutingMonitor {
                                 serviceStatus = PollStatus.down("Directory " + fullUrl + " should be empty but isn't!");
                             }
                         } else {
-                            serviceStatus = PollStatus.down("Directory " + fullUrl + " should exists but doesn't!");
+                            serviceStatus = PollStatus.down("Directory " + fullUrl + " should exist but doesn't!");
                         }
                         break;
                     case FOLDER_NOT_EMPTY:
@@ -199,7 +199,7 @@ public class JCifsMonitor extends ParameterSubstitutingMonitor {
                                 serviceStatus = PollStatus.down("Directory " + fullUrl + " should not be empty but is!");
                             }
                         } else {
-                            serviceStatus = PollStatus.down("Directory " + fullUrl + " should exists but doesn't!");
+                            serviceStatus = PollStatus.down("Directory " + fullUrl + " should exist but doesn't!");
                         }
                         break;
                     default:
@@ -244,6 +244,10 @@ public class JCifsMonitor extends ParameterSubstitutingMonitor {
         } catch (NoSuchFieldException | ClassNotFoundException | IllegalAccessException e) {
             logger.error("Error setting JCifs timeouts ", e);
         }
+    }
+
+    protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+        return new SmbFile(url, ntlmPasswordAuthentication);
     }
 
     /**

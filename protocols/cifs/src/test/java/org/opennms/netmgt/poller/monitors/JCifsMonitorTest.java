@@ -29,16 +29,14 @@
 package org.opennms.netmgt.poller.monitors;
 
 import static org.easymock.EasyMock.anyObject;
-import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.powermock.api.easymock.PowerMock.createNiceMock;
-import static org.powermock.api.easymock.PowerMock.expectNew;
 import static org.powermock.api.easymock.PowerMock.replay;
 
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Map;
@@ -49,14 +47,14 @@ import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
 import jcifs.smb.SmbFilenameFilter;
 
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TestName;
 import org.opennms.netmgt.poller.MonitoredService;
 import org.opennms.netmgt.poller.PollStatus;
 import org.opennms.netmgt.poller.mock.MonitorTestUtils;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * WARNING: Powermock has a bug that prevents this test from running properly on 
@@ -67,8 +65,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
  * @see http://hg.openjdk.java.net/jdk9/hs-rt/hotspot/rev/4986ca806899
  * @see http://www.takipiblog.com/oracles-latest-java-8-update-broke-your-tools-how-did-it-happen/
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({SmbFile.class, JCifsMonitor.class})
 public class JCifsMonitorTest {
     private SmbFile mockSmbFileValidPath;
     private SmbFile mockSmbFileInvalidPath;
@@ -78,51 +74,55 @@ public class JCifsMonitorTest {
     private SmbFile mockSmbFileMalformedUrlException;
     private SmbFile mockSmbFileSmbHost;
 
+    @Rule
+    public TestName m_testName = new TestName();
+
     @Before
     public void setUp() throws Exception {
+        System.out.println("------------------- begin " + m_testName.getMethodName() + " ---------------------");
         mockSmbFileValidPath = createNiceMock(SmbFile.class);
         expect(mockSmbFileValidPath.exists()).andReturn(true).anyTimes();
-        expectNew(SmbFile.class, new Class<?>[]{String.class, NtlmPasswordAuthentication.class}, eq("smb://10.123.123.123/validPath"), isA(NtlmPasswordAuthentication.class)).andReturn(mockSmbFileValidPath).anyTimes();
 
         mockSmbFileInvalidPath = createNiceMock(SmbFile.class);
         expect(mockSmbFileInvalidPath.exists()).andReturn(false).anyTimes();
-        expectNew(SmbFile.class, new Class<?>[]{String.class, NtlmPasswordAuthentication.class}, eq("smb://10.123.123.123/invalidPath"), isA(NtlmPasswordAuthentication.class)).andReturn(mockSmbFileInvalidPath).anyTimes();
 
         mockSmbFolderEmpty = createNiceMock(SmbFile.class);
         expect(mockSmbFolderEmpty.exists()).andReturn(true).anyTimes();
         expect(mockSmbFolderEmpty.list((SmbFilenameFilter) anyObject())).andReturn(new String[]{}).anyTimes();
-        expectNew(SmbFile.class, new Class<?>[]{String.class, NtlmPasswordAuthentication.class}, eq("smb://10.123.123.123/folderEmpty"), isA(NtlmPasswordAuthentication.class)).andReturn(mockSmbFolderEmpty).anyTimes();
 
         mockSmbFolderNotEmpty = createNiceMock(SmbFile.class);
         expect(mockSmbFolderNotEmpty.exists()).andReturn(true).anyTimes();
         expect(mockSmbFolderNotEmpty.list((SmbFilenameFilter) anyObject())).andReturn(new String[]{"ABCD", "ACBD", "DCBA", "DABC"}).anyTimes();
-        expectNew(SmbFile.class, new Class<?>[]{String.class, NtlmPasswordAuthentication.class}, eq("smb://10.123.123.123/folderNotEmpty"), isA(NtlmPasswordAuthentication.class)).andReturn(mockSmbFolderNotEmpty).anyTimes();
 
         mockSmbFileSmbException = createNiceMock(SmbFile.class);
         expect(mockSmbFileSmbException.exists()).andThrow(new SmbException(SmbException.ERROR_ACCESS_DENIED, true));
-        expectNew(SmbFile.class, new Class<?>[]{String.class, NtlmPasswordAuthentication.class}, eq("smb://10.123.123.123/smbException"), isA(NtlmPasswordAuthentication.class)).andReturn(mockSmbFileSmbException).anyTimes();
 
         mockSmbFileMalformedUrlException = createNiceMock(SmbFile.class);
         expect(mockSmbFileMalformedUrlException.exists()).andThrow(new SmbException(SmbException.ERROR_ACCESS_DENIED, true));
-        expectNew(SmbFile.class, new Class<?>[]{String.class, NtlmPasswordAuthentication.class}, eq("smb://10.123.123.123/malformedUrlException"), isA(NtlmPasswordAuthentication.class)).andReturn(mockSmbFileMalformedUrlException).anyTimes();
 
         mockSmbFileSmbHost = createNiceMock(SmbFile.class);
         expect(mockSmbFileSmbHost.exists()).andThrow(new SmbException(SmbException.ERROR_ACCESS_DENIED, true));
-        expectNew(SmbFile.class, new Class<?>[]{String.class, NtlmPasswordAuthentication.class}, eq("smb://192.168.0.123/smbException"), isA(NtlmPasswordAuthentication.class)).andReturn(mockSmbFileSmbHost).anyTimes();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        System.out.println("------------------- end " + m_testName.getMethodName() + " -----------------------");
     }
 
     @Test
-    public void testPoll() throws UnknownHostException {
-
+    public void testPollValidPath() throws UnknownHostException {
         MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
 
         Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
 
         replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
 
-        JCifsMonitor jCifsMonitor = new JCifsMonitor();
-
-        PollStatus pollStatus;
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFileValidPath;
+            }
+        };
 
         /*
          * checking path does exist and mode is PATH_EXIST => up
@@ -133,8 +133,24 @@ public class JCifsMonitorTest {
         m.put("mode", "PATH_EXIST");
         m.put("path", "/validPath");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.up(), pollStatus);
+    }
+
+    @Test
+    public void testPollInvalidPath() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFileInvalidPath;
+            }
+        };
 
         /*
          * checking path does not exist and mode is PATH_EXIST => down
@@ -145,8 +161,24 @@ public class JCifsMonitorTest {
         m.put("mode", "PATH_EXIST");
         m.put("path", "/invalidPath");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.down(), pollStatus);
+    }
+
+    @Test
+    public void testPollValidPathNotExist() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFileValidPath;
+            }
+        };
 
         /*
          * checking path does exist and mode is PATH_NOT_EXIST => down
@@ -157,8 +189,24 @@ public class JCifsMonitorTest {
         m.put("mode", "PATH_NOT_EXIST");
         m.put("path", "/validPath");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.down(), pollStatus);
+    }
+
+    @Test
+    public void testPollInvalidPathNotExist() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFileInvalidPath;
+            }
+        };
 
         /*
          * checking path does not exist and mode is PATH_NOT_EXIST => up
@@ -169,8 +217,24 @@ public class JCifsMonitorTest {
         m.put("mode", "PATH_NOT_EXIST");
         m.put("path", "/invalidPath");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.up(), pollStatus);
+    }
+
+    @Test
+    public void testPollFolderNotEmpty() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFolderNotEmpty;
+            }
+        };
 
         /*
          * checking folder not empty and mode is FOLDER_EMPTY => down
@@ -181,8 +245,24 @@ public class JCifsMonitorTest {
         m.put("mode", "FOLDER_EMPTY");
         m.put("path", "/folderNotEmpty");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.down(), pollStatus);
+    }
+
+    @Test
+    public void testPollFolderEmpty() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFolderEmpty;
+            }
+        };
 
         /*
          * checking folder empty and mode is FOLDER_EMPTY => up
@@ -193,8 +273,24 @@ public class JCifsMonitorTest {
         m.put("mode", "FOLDER_EMPTY");
         m.put("path", "/folderEmpty");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.up(), pollStatus);
+    }
+
+    @Test
+    public void testPollFolderNotEmptyMode() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFolderNotEmpty;
+            }
+        };
 
         /*
          * checking folder not empty and mode is FOLDER_NOT_EMPTY => up
@@ -205,8 +301,24 @@ public class JCifsMonitorTest {
         m.put("mode", "FOLDER_NOT_EMPTY");
         m.put("path", "/folderNotEmpty");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.up(), pollStatus);
+    }
+
+    @Test
+    public void testPollFolderEmptyMode() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFolderEmpty;
+            }
+        };
 
         /*
          * checking folder empty and mode is FOLDER_NOT_EMPTY => down
@@ -217,8 +329,24 @@ public class JCifsMonitorTest {
         m.put("mode", "FOLDER_NOT_EMPTY");
         m.put("path", "/folderEmpty");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.down(), pollStatus);
+    }
+
+    @Test
+    public void testPollFolderEmptyInvalidMode() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFolderEmpty;
+            }
+        };
 
         /*
          * checking for invalid mode => down
@@ -229,8 +357,24 @@ public class JCifsMonitorTest {
         m.put("mode", "ABC");
         m.put("path", "/folderEmpty");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.unknown(), pollStatus);
+    }
+
+    @Test
+    public void testPollSmbException() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFileSmbException;
+            }
+        };
 
         /*
          * checking for SmbException => down
@@ -241,8 +385,24 @@ public class JCifsMonitorTest {
         m.put("mode", "PATH_EXIST");
         m.put("path", "/smbException");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.down(), pollStatus);
+    }
+
+    @Test
+    public void testPollMalformedUrlException() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFileMalformedUrlException;
+            }
+        };
 
         /*
          * checking for MalformedUrlException => down
@@ -253,8 +413,24 @@ public class JCifsMonitorTest {
         m.put("mode", "PATH_EXIST");
         m.put("path", "/malformedUrlException");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.down(), pollStatus);
+    }
+
+    @Test
+    public void testPoll12() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFileValidPath;
+            }
+        };
 
         /*
          * checking for overriding Ip address via empty string => up
@@ -266,8 +442,24 @@ public class JCifsMonitorTest {
         m.put("smbHost", "");
         m.put("path", "/validPath");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.up(), pollStatus);
+    }
+
+    @Test
+    public void testPoll13() throws UnknownHostException {
+        MonitoredService svc = MonitorTestUtils.getMonitoredService(99, InetAddress.getByName("10.123.123.123"), "JCIFS");
+
+        Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
+
+        replay(mockSmbFolderEmpty, mockSmbFolderNotEmpty, mockSmbFileValidPath, mockSmbFileInvalidPath, SmbFile.class);
+
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFileSmbHost;
+            }
+        };
 
         /*
          * checking for overriding Ip address via smbHost => down
@@ -279,7 +471,7 @@ public class JCifsMonitorTest {
         m.put("smbHost", "192.168.0.123");
         m.put("path", "/smbException");
 
-        pollStatus = jCifsMonitor.poll(svc, m);
+        PollStatus pollStatus = jCifsMonitor.poll(svc, m);
         assertEquals(PollStatus.down(), pollStatus);
         assertTrue(pollStatus.getReason().matches(".*192\\.168\\.0\\.123.*"));
     }
@@ -291,7 +483,12 @@ public class JCifsMonitorTest {
 
         Map<String, Object> m = Collections.synchronizedMap(new TreeMap<String, Object>());
 
-        JCifsMonitor jCifsMonitor = new JCifsMonitor();
+        JCifsMonitor jCifsMonitor = new JCifsMonitor() {
+            @Override
+            protected SmbFile makeSmbFile(String url, NtlmPasswordAuthentication ntlmPasswordAuthentication) throws MalformedURLException {
+                return mockSmbFileInvalidPath;
+            }
+        };
 
         m.put("username", "{ipAddr}");
         m.put("password", "{nodeLabel}");
