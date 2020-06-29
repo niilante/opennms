@@ -267,9 +267,7 @@ commands:
       - run:
           name: Compile OpenNMS
           command: |
-            echo JAVA_HOME=$JAVA_HOME
-            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-            yum -y install java-11-openjdk-devel
+            yum -y install java-11-openjdk-devel java-latest-openjdk-devel
             .circleci/scripts/configure-signing.sh
             mvn clean -DskipTests=true
             << parameters.node-memory >>
