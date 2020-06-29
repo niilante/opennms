@@ -272,7 +272,6 @@ commands:
             mvn clean -DskipTests=true
             << parameters.node-memory >>
             ls -l /usr/lib/jvm
-            exit 1
             ./compile.pl -DskipTests=true -Dbuild.skip.tarball=false \
               -DupdatePolicy=never \
               -Daether.connector.resumeDownloads=false \

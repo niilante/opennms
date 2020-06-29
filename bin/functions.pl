@@ -207,6 +207,7 @@ if (not defined $JAVA_HOME or $JAVA_HOME eq "") {
 		warning("\$JAVA_HOME is not set, things might go wonky.  Or not.");
 	}
 }
+exit 1;
 
 if (defined $JAVA_HOME and $JAVA_HOME ne "") {
 	info("Using \$JAVA_HOME=$JAVA_HOME");
