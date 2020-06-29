@@ -404,7 +404,7 @@ sub get_version_from_java {
 sub find_java_home {
 	my $minimum_java = get_minimum_java();
 	my $maximum_java = get_maximum_java();
-	debug(sprintf "find_java_home: min=%s, max=%s", $minimum_java, $maximum_java);
+	debug(sprintf("find_java_home: min=%s, max=%s", $minimum_java, $maximum_java));
 
 	my $versions = {};
 	my $javacmd = 'java';
