@@ -396,12 +396,14 @@ sub get_version_from_java {
 	$bindir = dirname($javacmd);
 	$java_home = Cwd::realpath(File::Spec->catdir($bindir, '..'));
 
+	debug(sprintf("shortversion=%s, version=%s, build=%s, java_home=%s", $shortversion, $version, $build, $java_home));
 	return ($shortversion, $version, $build, $java_home);
 }
 
 sub find_java_home {
 	my $minimum_java = get_minimum_java();
 	my $maximum_java = get_maximum_java();
+	debug(sprintf "find_java_home: min=%s, max=%s", $minimum_java, $maximum_java);
 
 	my $versions = {};
 	my $javacmd = 'java';
@@ -439,16 +441,17 @@ sub find_java_home {
 	my $highest_valid = undef;
 
 	for my $majorversion (sort { $b cmp $a } keys %$versions) {
+		print STDERR "Java Major $majorversion:\n";
 		if (looks_like_number($majorversion) and looks_like_number($minimum_java) and ($majorversion < $minimum_java or $majorversion >= $maximum_java)) {
 			next;
 		}
 
-		#print STDERR "Java $majorversion:\n";
+		print STDERR "Java $majorversion:\n";
 		JDK_SEARCH: for my $version (sort keys %{$versions->{$majorversion}}) {
-			#print STDERR "  $version:\n";
+			print STDERR "  $version:\n";
 			for my $build (sort keys %{$versions->{$majorversion}->{$version}}) {
 				my $java_home = $versions->{$majorversion}->{$version}->{$build};
-				#print STDERR "    ", $build, ": ", $java_home, "\n";
+				print STDERR "    ", $build, ": ", $java_home, "\n";
 				if ($build =~ /^(\d+)/) {
 					my $buildnumber = $1 || 0;
 					if ($majorversion eq "1.7" and $buildnumber >= 65 and defined $highest_valid) {
