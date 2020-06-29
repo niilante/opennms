@@ -385,7 +385,7 @@ sub get_version_from_java {
 	my ($output, $bindir, $shortversion, $version, $build, $java_home);
 
 	$output = `"$javacmd" -version 2>\&1`;
-	($version) = $output =~ / version \"?([\d\.]+?(?:[\+\-\_]\S+?)?)\"?(?: \d\d\d\d-\d\d-\d\d)?$/ms;
+	($version) = $output =~ / version \"?([\d\.]+?(?:[\+\-\_]\S+?)?)\"?(?: \d\d\d\d-\d\d-\d\d)?(?: LTS)?$/ms;
 	if (defined $version) {
 		($version, $build) = $version =~ /^([\d\.]+)(?:[\+\-\_](.*?))?$/;
 		($shortversion) = $version =~ /^(\d+\.\d+|\d+)/;
