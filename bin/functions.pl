@@ -390,13 +390,15 @@ sub get_version_from_java {
 		($version, $build) = $version =~ /^([\d\.]+)(?:[\+\-\_](.*?))?$/;
 		($shortversion) = $version =~ /^(\d+\.\d+|\d+)/;
 		$shortversion += 0; # make sure it's a number
+	} else {
+		debug("output:".$output);
 	}
 	$build = 0 if (not defined $build);
 
 	$bindir = dirname($javacmd);
 	$java_home = Cwd::realpath(File::Spec->catdir($bindir, '..'));
 
-	debug(sprintf("shortversion=%s, version=%s, build=%s, java_home=%s", $shortversion, $version, $build, $java_home));
+	debug(sprintf("shortversion=%s, version=%s, build=%s, java_home=%s", $shortversion || '', $version || '', $build, $java_home));
 	return ($shortversion, $version, $build, $java_home);
 }
 
