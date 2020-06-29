@@ -438,7 +438,7 @@ sub find_java_home {
 
 	my $highest_valid = undef;
 
-	for my $majorversion (sort keys %$versions) {
+	for my $majorversion (sort { $b cmp $a } keys %$versions) {
 		if (looks_like_number($majorversion) and looks_like_number($minimum_java) and ($majorversion < $minimum_java or $majorversion >= $maximum_java)) {
 			next;
 		}
