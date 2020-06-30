@@ -330,8 +330,11 @@ commands:
           name: Integration Tests
           no_output_timeout: 1.0h
           command: |
-            echo JAVA_HOME=$JAVA_HOME
-            sudo apt -y install openjdk-11-jdk
+            sudo killall -9 apt-get || true && \
+            sudo apt-get update && \
+            sudo apt-get -y install debconf-utils && \
+            echo '* libraries/restart-without-asking boolean true' | sudo debconf-set-selections && \
+            sudo env DEBIAN_FRONTEND=noninteractive apt-get install -f openjdk-11-jdk
             ls -l /usr/lib/jvm
             export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
             export CCI_CODE_COVERAGE=<< parameters.run-code-coverage >>
@@ -711,6 +714,7 @@ jobs:
           name: Assemble tarballs
           # Install fake makensis to satisfy the assemble dependency
           command: |
+            sudo env DEBIAN_FRONTEND=noninteractive apt-get install -f openjdk-11-jdk
             sudo cp .circleci/scripts/makensis.py /usr/local/bin/makensis
             ./assemble.pl -Dopennms.home=/opt/opennms \
                           -DskipTests \
